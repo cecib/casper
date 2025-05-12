@@ -5,6 +5,8 @@ in vec3 frag_normal;
 
 out vec4 fragColor;
 
+uniform sampler2D textureSampler;
+
 vec3 light_pos = vec3(-1.0, -0.5, 1.0);
 float light_exp= 0.8; // exposure
 
@@ -17,5 +19,8 @@ void main() {
     vec3 lightDir = normalize(light_pos-frag_position);
     vec3 diffuse = vec3(max(dot(n, lightDir), 0.0))/length(light_pos);
 
-    fragColor = vec4(cube_col + ambient + light_exp * diffuse, 1.0);
+    vec2 uv = frag_position.xy;
+    vec4 texColor = texture(textureSampler, uv);
+
+    fragColor = vec4(texColor.xyz + ambient + light_exp * diffuse, 1.0);
 }

@@ -4,6 +4,7 @@ from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtCore import QTimer
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
+from PIL import Image
 
 
 def read_file(path):
@@ -54,6 +55,11 @@ class GLWidget(QOpenGLWidget):
         except Exception as e:
             print(f"Error compiling shaders: {e}")
 
+        # load textures
+        image = Image.open("./images/seamless_cow.jpg")
+        self.image = image.convert("RGBA")
+        self.image_data = np.array(self.image)
+
         self.timer.timeout.connect(self.update)  # trigger paintGL
         self.timer.start(16)  # ~60 FPS
 
@@ -81,7 +87,7 @@ class GLWidget(QOpenGLWidget):
         # use shader program
         glUseProgram(self.shader)
 
-        # set transform matrices
+        # send transforms to shader
         glUniformMatrix4fv(glGetUniformLocation(
             self.shader, 'projection'), 1, GL_FALSE, glm.value_ptr(projection))
         glUniformMatrix4fv(glGetUniformLocation(
@@ -94,6 +100,25 @@ class GLWidget(QOpenGLWidget):
         glDrawArrays(GL_TRIANGLES, 0, len(self.vertices))
         glBindVertexArray(0)
         check_gl_errors()
+
+        # set up texture
+        glActiveTexture(GL_TEXTURE0)
+        texture_id = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, texture_id)
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, self.image.width, self.image.height, 0,
+                     GL_RGBA, GL_UNSIGNED_BYTE, self.image_data)
+
+        glActiveTexture(GL_TEXTURE0)  # activate texture unit 0
+        glBindTexture(GL_TEXTURE_2D, texture_id)
+
+        # send texture to shader
+        glUniform1i(glGetUniformLocation(self.shader, "textureSampler"), 0)
 
     def setup_cube(self):
         """Set up cube and bind buffers."""
