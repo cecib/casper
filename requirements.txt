@@ -1,0 +1,16 @@
+autoflake==2.3.1
+autopep8==2.3.2
+docformatter==0.7
+numpy==2.2.5
+pycodestyle==2.13.0
+pyflakes==3.3.2
+pyformat==1.0
+PyOpenGL==3.1.9
+PyOpenGL-accelerate==3.1.9
+PySide6==6.9.0
+PySide6_Addons==6.9.0
+PySide6_Essentials==6.9.0
+shiboken2==5.13.2
+shiboken6==6.9.0
+unify==0.5
+untokenize==0.1.1

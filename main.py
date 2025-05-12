@@ -1,6 +1,6 @@
 import sys
+import glm
 import numpy as np
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QSurfaceFormat
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
@@ -38,6 +38,10 @@ class GLWidget(QOpenGLWidget):
     def __init__(self):
         super().__init__()
         self.setMinimumSize(400, 400)
+        self.shader = None
+        self.vertices = None
+        self.vao = None
+        self.vbo = None
 
     def initializeGL(self):
         glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -45,7 +49,7 @@ class GLWidget(QOpenGLWidget):
         glEnable(GL_MULTISAMPLE)
 
         try:
-            self.shader_program = compileProgram(
+            self.shader = compileProgram(
                 compileShader(vertex_shader, GL_VERTEX_SHADER),
                 compileShader(fragment_shader, GL_FRAGMENT_SHADER)
             )
@@ -56,38 +60,29 @@ class GLWidget(QOpenGLWidget):
 
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        
+
         # projection matrix
-        projection = np.array([
-            [1.0 / np.tan(np.radians(45.0)), 0, 0, 0],
-            [0, 1.0 / np.tan(np.radians(45.0) * (600.0 / 800.0)), 0, 0],
-            [0, 0, -50.0 / 49.9, -1.0],
-            [0, 0, -1.0, 0]
-        ], dtype=np.float32)
+        projection = glm.perspective(glm.radians(45.0), 1.0, 0.1, 100.0)
 
-        # view matrix (camera)
-        view = np.array([
-            [1.0, 0.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0, 0.0],
-            [0.0, 0.0, 1.0, -5.0],
-            [0.0, 0.0, 0.0, 1.0]
-        ], dtype=np.float32)
+        # view matrix
+        eye = glm.vec3(0.0, 0.0, 4.0)
+        center = glm.vec3(0.0, 0.0, 0.0)
+        up = glm.vec3(0.0, 1.0, 0.0)
+        view = glm.lookAt(eye, center, up)
 
-        # model matrix (cube rotation)
-        model = np.array([
-            [1.0, 0.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0, 0.0],
-            [0.0, 0.0, 1.0, 0.0],
-            [0.0, 0.0, 0.0, 1.0]
-        ], dtype=np.float32)
+        # transform model matrix
+        model = glm.mat4(1.0)
 
         # use shader program
-        glUseProgram(self.shader_program)
+        glUseProgram(self.shader)
 
         # set transform matrices
-        glUniformMatrix4fv(glGetUniformLocation(self.shader_program, "projection"), 1, GL_TRUE, projection)
-        glUniformMatrix4fv(glGetUniformLocation(self.shader_program, "view"), 1, GL_TRUE, view)
-        glUniformMatrix4fv(glGetUniformLocation(self.shader_program, "model"), 1, GL_TRUE, model)
+        glUniformMatrix4fv(glGetUniformLocation(
+            self.shader, 'projection'), 1, GL_FALSE, glm.value_ptr(projection))
+        glUniformMatrix4fv(glGetUniformLocation(
+            self.shader, 'model'), 1, GL_FALSE, glm.value_ptr(model))
+        glUniformMatrix4fv(glGetUniformLocation(
+            self.shader, 'view'), 1, GL_FALSE, glm.value_ptr(view))
 
         # draw cube
         glBindVertexArray(self.vao)
@@ -95,32 +90,40 @@ class GLWidget(QOpenGLWidget):
         glBindVertexArray(0)
 
     def setupCube(self):
-        """Set up cube and bind buffers"""
+        """Set up cube and bind buffers."""
         self.vertices = np.array([
             # front face
-            -0.5, -0.5,  0.5,  0.5, -0.5,  0.5,  0.5,  0.5, -0.5,  -0.5,  0.5, -0.5,
+            -0.5, -0.5,  0.5,   0.5, -0.5,  0.5,   0.5,  0.5,  0.5,
+            -0.5, -0.5,  0.5,   0.5,  0.5,  0.5,  -0.5,  0.5,  0.5,
             # back face
-            -0.5, -0.5, -0.5,  -0.5,  0.5, -0.5,   0.5,  0.5, -0.5,   0.5, -0.5, -0.5,
+            -0.5, -0.5, -0.5,  -0.5,  0.5, -0.5,   0.5,  0.5, -0.5,
+            -0.5, -0.5, -0.5,   0.5,  0.5, -0.5,   0.5, -0.5, -0.5,
             # left face
-            -0.5, -0.5, -0.5,  -0.5, -0.5,  0.5,  -0.5,  0.5,  0.5,  -0.5,  0.5, -0.5,
-            # Right face
-             0.5, -0.5, -0.5,   0.5,  0.5, -0.5,   0.5,  0.5,  0.5,   0.5, -0.5,  0.5,
+            -0.5, -0.5, -0.5,  -0.5, -0.5,  0.5,  -0.5,  0.5,  0.5,
+            -0.5, -0.5, -0.5,  -0.5,  0.5,  0.5,  -0.5,  0.5, -0.5,
+            # right face
+            0.5, -0.5, -0.5,   0.5,  0.5, -0.5,   0.5,  0.5,  0.5,
+            0.5, -0.5, -0.5,   0.5,  0.5,  0.5,   0.5, -0.5,  0.5,
             # top face
-            -0.5,  0.5, -0.5,   0.5,  0.5, -0.5,   0.5,  0.5,  0.5,  -0.5,  0.5,  0.5,
+            -0.5,  0.5, -0.5,   0.5,  0.5, -0.5,   0.5,  0.5,  0.5,
+            -0.5,  0.5, -0.5,   0.5,  0.5,  0.5,  -0.5,  0.5,  0.5,
             # bottom face
-            -0.5, -0.5, -0.5,  -0.5, -0.5,  0.5,   0.5, -0.5,  0.5,   0.5, -0.5, -0.5
+            -0.5, -0.5, -0.5,  -0.5, -0.5,  0.5,   0.5, -0.5,  0.5,
+            -0.5, -0.5, -0.5,   0.5, -0.5,  0.5,   0.5, -0.5, -0.5
         ], dtype=np.float32)
 
         # create buffer
         self.vao = glGenVertexArrays(1)
         self.vbo = glGenBuffers(1)
-        
+
         glBindVertexArray(self.vao)
 
         glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
-        glBufferData(GL_ARRAY_BUFFER, self.vertices.nbytes, self.vertices, GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, self.vertices.nbytes,
+                     self.vertices, GL_STATIC_DRAW)
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * self.vertices.itemsize, None) 
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+                              3 * self.vertices.itemsize, None)
         glEnableVertexAttribArray(0)
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
@@ -132,8 +135,8 @@ class GLWidget(QOpenGLWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Casper Render")
-        
+        self.setWindowTitle('Casper Render')
+
         layout = QVBoxLayout()
         gl_widget = GLWidget()
         layout.addWidget(gl_widget)
@@ -155,6 +158,5 @@ def main():
     sys.exit(app.exec())
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
-
