@@ -10,24 +10,9 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 
 
-vertex_shader = """
-#version 330 core
-layout(location = 0) in vec3 position;
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-void main() {
-    gl_Position = projection * view * model * vec4(position, 1.0);
-}
-"""
-
-fragment_shader = """
-#version 330 core
-out vec4 fragColor;
-void main() {
-    fragColor = vec4(1.0, 0.0, 1.0, 1.0);
-}
-"""
+def read_file(path):
+    with open(path, 'r') as file:
+        return file.read()
 
 
 def check_gl_errors():
@@ -53,14 +38,27 @@ class GLWidget(QOpenGLWidget):
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
         try:
-            self.shader = compileProgram(
-                compileShader(vertex_shader, GL_VERTEX_SHADER),
-                compileShader(fragment_shader, GL_FRAGMENT_SHADER)
-            )
+            # compile shaders
+            vertex_shader_id = compileShader(
+                read_file('vertex_shader.glsl'), GL_VERTEX_SHADER)
+            vertex_shader_status = glGetShaderiv(
+                vertex_shader_id, GL_COMPILE_STATUS)
+            print(
+                f"Vertex shader compilation status: {vertex_shader_status}")
+
+            fragment_shader_id = compileShader(
+                read_file('fragment_shader.glsl'), GL_FRAGMENT_SHADER)
+            fragment_shader_status = glGetShaderiv(
+                fragment_shader_id, GL_COMPILE_STATUS)
+            print(
+                f"Fragment shader compilation status: {fragment_shader_status}")
+
+            self.shader = compileProgram(vertex_shader_id, fragment_shader_id)
+
         except Exception as e:
             print(f"Error compiling shaders: {e}")
 
-        self.timer.timeout.connect(self.update)  # triggers paintGL
+        self.timer.timeout.connect(self.update)  # trigger paintGL
         self.timer.start(16)  # ~60 FPS
 
         self.setup_cube()
