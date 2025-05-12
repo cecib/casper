@@ -5,15 +5,17 @@ in vec3 frag_normal;
 
 out vec4 fragColor;
 
+vec3 light_pos = vec3(-1.0, -0.5, 1.0);
+float light_exp= 0.8; // exposure
+
 void main() {
-    vec3 cube_color = vec3(0.28, 0.0, 0.4);
+    vec3 n = normalize(frag_normal);
+    vec3 cube_col = vec3(0.28, 0.0, 0.4);
 
     // lighting
-    vec3 ambient = 0.2 * vec3(1.0, 0.0, 1.0);
-    vec3 norm = normalize(frag_normal);
-    vec3 lightDir = normalize(vec3(-1.0, -1.0, 0.0)-frag_position);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = 0.6 * diff * vec3(1.0, 0.0, 1.0);
+    vec3 ambient = vec3(0.5, 0.0, 0.5);
+    vec3 lightDir = normalize(light_pos-frag_position);
+    vec3 diffuse = vec3(max(dot(n, lightDir), 0.0))/length(light_pos);
 
-    fragColor = vec4(cube_color + ambient + diffuse, 1.0);
+    fragColor = vec4(cube_col + ambient + light_exp * diffuse, 1.0);
 }

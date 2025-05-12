@@ -1,5 +1,4 @@
 import glm
-import time
 import numpy as np
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtCore import QTimer

@@ -3,6 +3,11 @@ from PySide6.QtGui import QSurfaceFormat
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from render import GLWidget
 
+gl_format = QSurfaceFormat()
+gl_format.setVersion(3, 3)  # set OpenGL version
+gl_format.setProfile(QSurfaceFormat.CoreProfile)
+QSurfaceFormat.setDefaultFormat(gl_format)
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -28,11 +33,6 @@ class MainWindow(QMainWindow):
 
 
 def main():
-    gl_format = QSurfaceFormat()
-    gl_format.setVersion(3, 3)  # set OpenGL version
-    gl_format.setProfile(QSurfaceFormat.CoreProfile)
-    QSurfaceFormat.setDefaultFormat(gl_format)
-
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
