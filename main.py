@@ -1,9 +1,11 @@
 import sys
 import glm
+import time
 import numpy as np
 from PySide6.QtGui import QSurfaceFormat
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
+from PySide6.QtCore import QTimer
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 
@@ -23,7 +25,7 @@ fragment_shader = """
 #version 330 core
 out vec4 fragColor;
 void main() {
-    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    fragColor = vec4(1.0, 0.0, 1.0, 1.0);
 }
 """
 
@@ -38,16 +40,18 @@ class GLWidget(QOpenGLWidget):
     def __init__(self):
         super().__init__()
         self.setMinimumSize(400, 400)
+        self.timer = QTimer(self)
         self.shader = None
         self.vertices = None
         self.vao = None
         self.vbo = None
+        self.rotation_x = 0.0
+        self.rotation_y = 0.0
 
     def initializeGL(self):
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
-
         try:
             self.shader = compileProgram(
                 compileShader(vertex_shader, GL_VERTEX_SHADER),
@@ -56,7 +60,10 @@ class GLWidget(QOpenGLWidget):
         except Exception as e:
             print(f"Error compiling shaders: {e}")
 
-        self.setupCube()
+        self.timer.timeout.connect(self.update)  # triggers paintGL
+        self.timer.start(16)  # ~60 FPS
+
+        self.setup_cube()
 
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -72,6 +79,8 @@ class GLWidget(QOpenGLWidget):
 
         # transform model matrix
         model = glm.mat4(1.0)
+        model = glm.rotate(model, glm.radians(self.rotation_x % 360), glm.vec3(1.0, 0.0, 0.0))
+        model = glm.rotate(model, glm.radians(self.rotation_y % 360), glm.vec3(0.0, 1.0, 0.0))
 
         # use shader program
         glUseProgram(self.shader)
@@ -89,7 +98,7 @@ class GLWidget(QOpenGLWidget):
         glDrawArrays(GL_TRIANGLES, 0, len(self.vertices) // 3)
         glBindVertexArray(0)
 
-    def setupCube(self):
+    def setup_cube(self):
         """Set up cube and bind buffers."""
         self.vertices = np.array([
             # front face
@@ -131,26 +140,41 @@ class GLWidget(QOpenGLWidget):
         # unbind VAO
         glBindVertexArray(0)
 
+    def update_rotation(self, dx, dy):
+        self.rotation_x += dy  # * 0.5
+        self.rotation_y += dx  # * 0.5
+        print(self.rotation_x)
+        print(self.rotation_y)
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Casper Render')
-
         layout = QVBoxLayout()
-        gl_widget = GLWidget()
-        layout.addWidget(gl_widget)
-
+        self.gl_widget = GLWidget()
+        layout.addWidget(self.gl_widget)
         central_widget = QWidget(self)
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
+        self.last_mouse_pos = None
+
+    def mousePressEvent(self, event):
+        self.last_mouse_pos = event.position()
+
+    def mouseMoveEvent(self, event):
+        if self.last_mouse_pos is not None:
+            self.last_mouse_pos = event.position()
+            dx = event.position().x() # - self.last_mouse_pos.x()
+            dy = event.position().y() #- self.last_mouse_pos.y()
+            self.gl_widget.update_rotation(dx, dy)
 
 
 def main():
-    format = QSurfaceFormat()
-    format.setVersion(3, 3)  # set OpenGL version
-    format.setProfile(QSurfaceFormat.CoreProfile)
-    QSurfaceFormat.setDefaultFormat(format)
+    gl_format = QSurfaceFormat()
+    gl_format.setVersion(3, 3)  # set OpenGL version
+    gl_format.setProfile(QSurfaceFormat.CoreProfile)
+    QSurfaceFormat.setDefaultFormat(gl_format)
 
     app = QApplication(sys.argv)
     window = MainWindow()
