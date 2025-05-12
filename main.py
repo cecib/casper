@@ -30,16 +30,10 @@ void main() {
 """
 
 
-class Ray():
-    def __init__(self, x1_y1, x2_y2):
-        self._x1, self._y1 = x1_y1
-        self._x2, self._y2 = x2_y2
-
-
 class GLWidget(QOpenGLWidget):
     def __init__(self):
         super().__init__()
-        self.setMinimumSize(400, 400)
+        self.setMinimumSize(560, 560)
         self.timer = QTimer(self)
         self.shader = None
         self.vertices = None
@@ -79,8 +73,10 @@ class GLWidget(QOpenGLWidget):
 
         # transform model matrix
         model = glm.mat4(1.0)
-        model = glm.rotate(model, glm.radians(self.rotation_x % 360), glm.vec3(1.0, 0.0, 0.0))
-        model = glm.rotate(model, glm.radians(self.rotation_y % 360), glm.vec3(0.0, 1.0, 0.0))
+        model = glm.rotate(model, glm.radians(
+            self.rotation_x % 360), glm.vec3(1.0, 0.0, 0.0))
+        model = glm.rotate(model, glm.radians(
+            self.rotation_y % 360), glm.vec3(0.0, 1.0, 0.0))
 
         # use shader program
         glUseProgram(self.shader)
@@ -141,10 +137,8 @@ class GLWidget(QOpenGLWidget):
         glBindVertexArray(0)
 
     def update_rotation(self, dx, dy):
-        self.rotation_x += dy  # * 0.5
-        self.rotation_y += dx  # * 0.5
-        print(self.rotation_x)
-        print(self.rotation_y)
+        self.rotation_x += dy * 0.005
+        self.rotation_y += dx * 0.005
 
 
 class MainWindow(QMainWindow):
@@ -163,11 +157,11 @@ class MainWindow(QMainWindow):
         self.last_mouse_pos = event.position()
 
     def mouseMoveEvent(self, event):
-        if self.last_mouse_pos is not None:
-            self.last_mouse_pos = event.position()
-            dx = event.position().x() # - self.last_mouse_pos.x()
-            dy = event.position().y() #- self.last_mouse_pos.y()
-            self.gl_widget.update_rotation(dx, dy)
+        # TODO: use last mouse pos for rotation dir
+        self.last_mouse_pos = event.position()
+        dx = event.position().x()
+        dy = event.position().y()
+        self.gl_widget.update_rotation(dx, dy)
 
 
 def main():
