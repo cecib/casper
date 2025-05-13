@@ -56,7 +56,7 @@ class GLWidget(QOpenGLWidget):
             print(f"Error compiling shaders: {e}")
 
         # load textures
-        image = Image.open("./images/seamless_cow.jpg")
+        image = Image.open("./images/leopard.jpg")
         self.image = image.convert("RGBA")
         self.image_data = np.array(self.image)
 

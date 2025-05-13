@@ -15,12 +15,13 @@ void main() {
     vec3 cube_col = vec3(0.28, 0.0, 0.4);
 
     // lighting
-    vec3 ambient = vec3(0.5, 0.0, 0.5);
+    // vec3 ambient = vec3(0.5, 0.5, 0.5);
     vec3 lightDir = normalize(light_pos-frag_position);
     vec3 diffuse = vec3(max(dot(n, lightDir), 0.0))/length(light_pos);
 
+    // texture
     vec2 uv = frag_position.xy;
     vec4 texColor = texture(textureSampler, uv);
 
-    fragColor = vec4(texColor.xyz + ambient + light_exp * diffuse, 1.0);
+    fragColor = vec4(texColor.xyz + light_exp * diffuse, 1.0);
 }
