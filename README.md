@@ -1,4 +1,4 @@
-# Casper
+# casper
 PySide-based app rendering in PyOpenGL.
 
 ---------------------------
