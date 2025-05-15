@@ -19,9 +19,12 @@ def check_gl_errors():
 
 
 class GLWidget(QOpenGLWidget):
+
+    WIDTH, HEIGHT = 560, 560
+
     def __init__(self):
         super().__init__()
-        self.setMinimumSize(560, 560)
+        self.setMinimumSize(self.WIDTH, self.HEIGHT)
         self.timer = QTimer(self)
         self.shader = None
         self.vertices = None
@@ -128,36 +131,36 @@ class GLWidget(QOpenGLWidget):
         """Set up cube and bind buffers."""
         self.vertices = np.array([
             # right face (x = 0.5)
-            [0.5, -0.5, 0.5, 1, 0, 0, 0.0, 0.0],
-            [0.5, -0.5, -0.5, 1, 0, 0, 1.0, 0.0],
-            [0.5, 0.5, -0.5, 1, 0, 0, 1.0, 1.0],
-            [0.5, -0.5, 0.5, 1, 0, 0, 0.0, 0.0],
-            [0.5, 0.5, -0.5, 1, 0, 0, 1.0, 1.0],
-            [0.5, 0.5, 0.5, 1, 0, 0, 0.0, 1.0],
+            [0.5, -0.5, 0.5, 1, 0, 0, 1.0, 0.0],
+            [0.5, -0.5, -0.5, 1, 0, 0, 0.0, 0.0],
+            [0.5, 0.5, -0.5, 1, 0, 0, 0.0, 1.0],
+            [0.5, -0.5, 0.5, 1, 0, 0, 1.0, 0.0],
+            [0.5, 0.5, -0.5, 1, 0, 0, 0.0, 1.0],
+            [0.5, 0.5, 0.5, 1, 0, 0, 1.0, 1.0],
 
             # left face (x = -0.5)
-            [-0.5, -0.5, -0.5, -1, 0, 0, 0.0, 0.0],
-            [-0.5, -0.5, 0.5, -1, 0, 0, 1.0, 0.0],
-            [-0.5, 0.5, 0.5, -1, 0, 0, 1.0, 1.0],
-            [-0.5, -0.5, -0.5, -1, 0, 0, 0.0, 0.0],
-            [-0.5, 0.5, 0.5, -1, 0, 0, 1.0, 1.0],
-            [-0.5, 0.5, -0.5, -1, 0, 0, 0.0, 1.0],
+            [-0.5, -0.5, -0.5, -1, 0, 0, 1.0, 0.0],
+            [-0.5, -0.5, 0.5, -1, 0, 0, 0.0, 0.0],
+            [-0.5, 0.5, 0.5, -1, 0, 0, 0.0, 1.0],
+            [-0.5, -0.5, -0.5, -1, 0, 0, 1.0, 0.0],
+            [-0.5, 0.5, 0.5, -1, 0, 0, 0.0, 1.0],
+            [-0.5, 0.5, -0.5, -1, 0, 0, 1.0, 1.0],
 
             # top face (y = 0.5)
-            [-0.5, 0.5, 0.5, 0, 1, 0, 0.0, 0.0],
-            [0.5, 0.5, 0.5, 0, 1, 0, 1.0, 0.0],
-            [0.5, 0.5, -0.5, 0, 1, 0, 1.0, 1.0],
-            [-0.5, 0.5, 0.5, 0, 1, 0, 0.0, 0.0],
-            [0.5, 0.5, -0.5, 0, 1, 0, 1.0, 1.0],
-            [-0.5, 0.5, -0.5, 0, 1, 0, 0.0, 1.0],
+            [-0.5, 0.5, 0.5, 0, 1, 0, 0.0, 1.0],
+            [0.5, 0.5, 0.5, 0, 1, 0, 1.0, 1.0],
+            [0.5, 0.5, -0.5, 0, 1, 0, 1.0, 0.0],
+            [-0.5, 0.5, 0.5, 0, 1, 0, 0.0, 1.0],
+            [0.5, 0.5, -0.5, 0, 1, 0, 1.0, 0.0],
+            [-0.5, 0.5, -0.5, 0, 1, 0, 0.0, 0.0],
 
             # bottom face (y = -0.5)
-            [-0.5, -0.5, -0.5, 0, -1, 0, 0.0, 0.0],
-            [0.5, -0.5, -0.5, 0, -1, 0, 1.0, 0.0],
-            [0.5, -0.5, 0.5, 0, -1, 0, 1.0, 1.0],
-            [-0.5, -0.5, -0.5, 0, -1, 0, 0.0, 0.0],
-            [0.5, -0.5, 0.5, 0, -1, 0, 1.0, 1.0],
-            [-0.5, -0.5, 0.5, 0, -1, 0, 0.0, 1.0],
+            [-0.5, -0.5, -0.5, 0, -1, 0, 0.0, 1.0],
+            [0.5, -0.5, -0.5, 0, -1, 0, 1.0, 1.0],
+            [0.5, -0.5, 0.5, 0, -1, 0, 1.0, 0.0],
+            [-0.5, -0.5, -0.5, 0, -1, 0, 0.0, 1.0],
+            [0.5, -0.5, 0.5, 0, -1, 0, 1.0, 0.0],
+            [-0.5, -0.5, 0.5, 0, -1, 0, 0.0, 0.0],
 
             # front face (z = 0.5)
             [-0.5, -0.5, 0.5, 0, 0, 1, 0.0, 0.0],
@@ -186,27 +189,26 @@ class GLWidget(QOpenGLWidget):
         glBufferData(GL_ARRAY_BUFFER, self.vertices.nbytes,
                      self.vertices, GL_STATIC_DRAW)
 
+        len_vertex = 8 * self.vertices.itemsize
+
         # positions
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-                              8 * self.vertices.itemsize, ctypes.c_void_p(0))
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, len_vertex, ctypes.c_void_p(0))
         glEnableVertexAttribArray(0)
 
         # normals
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
-                              8 * self.vertices.itemsize, ctypes.c_void_p(3 * self.vertices.itemsize))
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, len_vertex, ctypes.c_void_p(3 * self.vertices.itemsize))
         glEnableVertexAttribArray(1)
 
         # uvs
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE,
-                              8 * self.vertices.itemsize, ctypes.c_void_p(2 * self.vertices.itemsize))
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, len_vertex, ctypes.c_void_p(6 * self.vertices.itemsize))
         glEnableVertexAttribArray(2)
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)  # unbind VAO
 
     def update_rotation(self, dx, dy):
-        self.rotation_x += dy * 0.005
-        self.rotation_y += dx * 0.005
+        self.rotation_x = dy + self.HEIGHT//2
+        self.rotation_y = -dx - self.WIDTH//2
 
     def cleanup(self):
         glDeleteTextures(1, [self.texture_id])
