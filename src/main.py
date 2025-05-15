@@ -31,6 +31,10 @@ class MainWindow(QMainWindow):
         dy = event.position().y()
         self.gl_widget.update_rotation(dx, dy)
 
+    def closeEvent(self, event):
+        self.gl_widget.cleanup()
+        event.accept()
+
 
 def main():
     app = QApplication(sys.argv)

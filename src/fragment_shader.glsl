@@ -2,6 +2,7 @@
 
 in vec3 frag_position;
 in vec3 frag_normal;
+in vec2 frag_uv;
 
 out vec4 fragColor;
 
@@ -21,7 +22,7 @@ void main() {
 
     // texture
     vec2 uv = frag_position.xy;
-    vec4 texColor = texture(textureSampler, uv);
+    vec4 texColor = texture(textureSampler, frag_uv);
 
     fragColor = vec4(texColor.xyz + light_exp * diffuse, 1.0);
 }

@@ -29,6 +29,7 @@ class GLWidget(QOpenGLWidget):
         self.vbo = None
         self.rotation_x = 0.0
         self.rotation_y = 0.0
+        #self.texture_id = None
 
     def initializeGL(self):
         glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -56,9 +57,24 @@ class GLWidget(QOpenGLWidget):
             print(f"Error compiling shaders: {e}")
 
         # load textures
-        image = Image.open("./images/leopard.jpg")
-        self.image = image.convert("RGBA")
-        self.image_data = np.array(self.image)
+        image = Image.open("./images/seamless_cow.jpg")
+        image = image.convert("RGBA")
+        image_data = np.array(image)
+
+        glActiveTexture(GL_TEXTURE0)
+        self.texture_id = glGenTextures(1)
+        if isinstance(self.texture_id, list):
+            self.texture_id = self.texture_id[0]
+        glBindTexture(GL_TEXTURE_2D, self.texture_id)
+
+        # Set up the texture parameters once
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
+                     GL_RGBA, GL_UNSIGNED_BYTE, image_data)
 
         self.timer.timeout.connect(self.update)  # trigger paintGL
         self.timer.start(16)  # ~60 FPS
@@ -101,21 +117,9 @@ class GLWidget(QOpenGLWidget):
         glBindVertexArray(0)
         check_gl_errors()
 
-        # set up texture
+        # use texture
         glActiveTexture(GL_TEXTURE0)
-        texture_id = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, texture_id)
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, self.image.width, self.image.height, 0,
-                     GL_RGBA, GL_UNSIGNED_BYTE, self.image_data)
-
-        glActiveTexture(GL_TEXTURE0)  # activate texture unit 0
-        glBindTexture(GL_TEXTURE_2D, texture_id)
+        glBindTexture(GL_TEXTURE_2D, self.texture_id)
 
         # send texture to shader
         glUniform1i(glGetUniformLocation(self.shader, "textureSampler"), 0)
@@ -123,53 +127,53 @@ class GLWidget(QOpenGLWidget):
     def setup_cube(self):
         """Set up cube and bind buffers."""
         self.vertices = np.array([
-            # right face (x = 0.5, normal: 1, 0, 0)
-            [0.5, -0.5, 0.5, 1, 0, 0],
-            [0.5, -0.5, -0.5, 1, 0, 0],
-            [0.5, 0.5, -0.5, 1, 0, 0],
-            [0.5, -0.5, 0.5, 1, 0, 0],
-            [0.5, 0.5, -0.5, 1, 0, 0],
-            [0.5, 0.5, 0.5, 1, 0, 0],
+            # right face (x = 0.5)
+            [0.5, -0.5, 0.5, 1, 0, 0, 0.0, 0.0],
+            [0.5, -0.5, -0.5, 1, 0, 0, 1.0, 0.0],
+            [0.5, 0.5, -0.5, 1, 0, 0, 1.0, 1.0],
+            [0.5, -0.5, 0.5, 1, 0, 0, 0.0, 0.0],
+            [0.5, 0.5, -0.5, 1, 0, 0, 1.0, 1.0],
+            [0.5, 0.5, 0.5, 1, 0, 0, 0.0, 1.0],
 
-            # left face (x = -0.5, normal: -1, 0, 0)
-            [-0.5, -0.5, -0.5, -1, 0, 0],
-            [-0.5, -0.5, 0.5, -1, 0, 0],
-            [-0.5, 0.5, 0.5, -1, 0, 0],
-            [-0.5, -0.5, -0.5, -1, 0, 0],
-            [-0.5, 0.5, 0.5, -1, 0, 0],
-            [-0.5, 0.5, -0.5, -1, 0, 0],
+            # left face (x = -0.5)
+            [-0.5, -0.5, -0.5, -1, 0, 0, 0.0, 0.0],
+            [-0.5, -0.5, 0.5, -1, 0, 0, 1.0, 0.0],
+            [-0.5, 0.5, 0.5, -1, 0, 0, 1.0, 1.0],
+            [-0.5, -0.5, -0.5, -1, 0, 0, 0.0, 0.0],
+            [-0.5, 0.5, 0.5, -1, 0, 0, 1.0, 1.0],
+            [-0.5, 0.5, -0.5, -1, 0, 0, 0.0, 1.0],
 
-            # top face (y = 0.5, normal: 0, 1, 0)
-            [-0.5,  0.5,  0.5, 0, 1, 0],
-            [0.5,  0.5,  0.5, 0, 1, 0],
-            [0.5,  0.5, -0.5, 0, 1, 0],
-            [-0.5,  0.5,  0.5, 0, 1, 0],
-            [0.5,  0.5, -0.5, 0, 1, 0],
-            [-0.5,  0.5, -0.5, 0, 1, 0],
+            # top face (y = 0.5)
+            [-0.5, 0.5, 0.5, 0, 1, 0, 0.0, 0.0],
+            [0.5, 0.5, 0.5, 0, 1, 0, 1.0, 0.0],
+            [0.5, 0.5, -0.5, 0, 1, 0, 1.0, 1.0],
+            [-0.5, 0.5, 0.5, 0, 1, 0, 0.0, 0.0],
+            [0.5, 0.5, -0.5, 0, 1, 0, 1.0, 1.0],
+            [-0.5, 0.5, -0.5, 0, 1, 0, 0.0, 1.0],
 
-            # bottom face (y = -0.5, normal: 0, -1, 0)
-            [-0.5, -0.5, -0.5, 0, -1, 0],
-            [0.5, -0.5, -0.5, 0, -1, 0],
-            [0.5, -0.5,  0.5, 0, -1, 0],
-            [-0.5, -0.5, -0.5, 0, -1, 0],
-            [0.5, -0.5,  0.5, 0, -1, 0],
-            [-0.5, -0.5,  0.5, 0, -1, 0],
+            # bottom face (y = -0.5)
+            [-0.5, -0.5, -0.5, 0, -1, 0, 0.0, 0.0],
+            [0.5, -0.5, -0.5, 0, -1, 0, 1.0, 0.0],
+            [0.5, -0.5, 0.5, 0, -1, 0, 1.0, 1.0],
+            [-0.5, -0.5, -0.5, 0, -1, 0, 0.0, 0.0],
+            [0.5, -0.5, 0.5, 0, -1, 0, 1.0, 1.0],
+            [-0.5, -0.5, 0.5, 0, -1, 0, 0.0, 1.0],
 
-            # front face (z = 0.5, normal: 0, 0, 1)
-            [-0.5, -0.5, 0.5, 0, 0, 1],
-            [0.5, -0.5, 0.5, 0, 0, 1],
-            [0.5, 0.5, 0.5, 0, 0, 1],
-            [-0.5, -0.5, 0.5, 0, 0, 1],
-            [0.5, 0.5, 0.5, 0, 0, 1],
-            [-0.5, 0.5, 0.5, 0, 0, 1],
+            # front face (z = 0.5)
+            [-0.5, -0.5, 0.5, 0, 0, 1, 0.0, 0.0],
+            [0.5, -0.5, 0.5, 0, 0, 1, 1.0, 0.0],
+            [0.5, 0.5, 0.5, 0, 0, 1, 1.0, 1.0],
+            [-0.5, -0.5, 0.5, 0, 0, 1, 0.0, 0.0],
+            [0.5, 0.5, 0.5, 0, 0, 1, 1.0, 1.0],
+            [-0.5, 0.5, 0.5, 0, 0, 1, 0.0, 1.0],
 
-            # back face (z = -0.5, normal: 0, 0, -1)
-            [0.5, -0.5, -0.5, 0, 0, -1],
-            [-0.5, -0.5, -0.5, 0, 0, -1],
-            [-0.5, 0.5, -0.5, 0, 0, -1],
-            [0.5, -0.5, -0.5, 0, 0, -1],
-            [-0.5, 0.5, -0.5, 0, 0, -1],
-            [0.5, 0.5, -0.5, 0, 0, -1],
+            # back face (z = -0.5)
+            [0.5, -0.5, -0.5, 0, 0, -1, 0.0, 0.0],
+            [-0.5, -0.5, -0.5, 0, 0, -1, 1.0, 0.0],
+            [-0.5, 0.5, -0.5, 0, 0, -1, 1.0, 1.0],
+            [0.5, -0.5, -0.5, 0, 0, -1, 0.0, 0.0],
+            [-0.5, 0.5, -0.5, 0, 0, -1, 1.0, 1.0],
+            [0.5, 0.5, -0.5, 0, 0, -1, 0.0, 1.0],
         ], dtype=np.float32)
 
         # create buffer
@@ -184,13 +188,18 @@ class GLWidget(QOpenGLWidget):
 
         # positions
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-                              6 * self.vertices.itemsize, ctypes.c_void_p(0))
+                              8 * self.vertices.itemsize, ctypes.c_void_p(0))
         glEnableVertexAttribArray(0)
 
         # normals
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
-                              6 * self.vertices.itemsize, ctypes.c_void_p(3 * self.vertices.itemsize))
+                              8 * self.vertices.itemsize, ctypes.c_void_p(3 * self.vertices.itemsize))
         glEnableVertexAttribArray(1)
+
+        # uvs
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE,
+                              8 * self.vertices.itemsize, ctypes.c_void_p(2 * self.vertices.itemsize))
+        glEnableVertexAttribArray(2)
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)  # unbind VAO
@@ -198,3 +207,6 @@ class GLWidget(QOpenGLWidget):
     def update_rotation(self, dx, dy):
         self.rotation_x += dy * 0.005
         self.rotation_y += dx * 0.005
+
+    def cleanup(self):
+        glDeleteTextures(1, [self.texture_id])
