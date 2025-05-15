@@ -12,7 +12,7 @@ QSurfaceFormat.setDefaultFormat(gl_format)
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('Casper Render')
+        self.setWindowTitle('casper render')
         layout = QVBoxLayout()
         self.gl_widget = GLWidget()
         layout.addWidget(self.gl_widget)

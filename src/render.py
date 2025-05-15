@@ -32,10 +32,11 @@ class GLWidget(QOpenGLWidget):
         self.vbo = None
         self.rotation_x = 0.0
         self.rotation_y = 0.0
-        #self.texture_id = None
+        # self.texture_id = None
 
     def initializeGL(self):
-        glClearColor(0.0, 0.0, 0.0, 1.0)
+        glClearColor(1., .6, 1., 1.0)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
         try:
@@ -60,8 +61,8 @@ class GLWidget(QOpenGLWidget):
             print(f"Error compiling shaders: {e}")
 
         # load textures
-        image = Image.open("./images/seamless_cow.jpg")
-        image = image.convert("RGBA")
+        image = Image.open('./images/seamless_cow.jpg')
+        image = image.convert('RGBA')
         image_data = np.array(image)
 
         glActiveTexture(GL_TEXTURE0)
@@ -70,7 +71,6 @@ class GLWidget(QOpenGLWidget):
             self.texture_id = self.texture_id[0]
         glBindTexture(GL_TEXTURE_2D, self.texture_id)
 
-        # Set up the texture parameters once
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
@@ -117,6 +117,7 @@ class GLWidget(QOpenGLWidget):
         # draw cube
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES, 0, len(self.vertices))
+        # glDrawElements(GL_TRIANGLES, len(self.vertices), GL_UNSIGNED_INT, None)
         glBindVertexArray(0)
         check_gl_errors()
 
@@ -125,7 +126,11 @@ class GLWidget(QOpenGLWidget):
         glBindTexture(GL_TEXTURE_2D, self.texture_id)
 
         # send texture to shader
-        glUniform1i(glGetUniformLocation(self.shader, "textureSampler"), 0)
+        glUniform1i(glGetUniformLocation(self.shader, 'textureSampler'), 0)
+
+        
+
+
 
     def setup_cube(self):
         """Set up cube and bind buffers."""
@@ -192,15 +197,18 @@ class GLWidget(QOpenGLWidget):
         len_vertex = 8 * self.vertices.itemsize
 
         # positions
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, len_vertex, ctypes.c_void_p(0))
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+                              len_vertex, ctypes.c_void_p(0))
         glEnableVertexAttribArray(0)
 
         # normals
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, len_vertex, ctypes.c_void_p(3 * self.vertices.itemsize))
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, len_vertex, ctypes.c_void_p(
+            3 * self.vertices.itemsize))
         glEnableVertexAttribArray(1)
 
         # uvs
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, len_vertex, ctypes.c_void_p(6 * self.vertices.itemsize))
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, len_vertex, ctypes.c_void_p(
+            6 * self.vertices.itemsize))
         glEnableVertexAttribArray(2)
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
