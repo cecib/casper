@@ -1,3 +1,4 @@
+import os
 import glm
 import numpy as np
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
@@ -21,6 +22,8 @@ def check_gl_errors():
 class GLWidget(QOpenGLWidget):
 
     WIDTH, HEIGHT = 560, 560
+    SHELL_NUM = 20
+    SHELL_OFFSET = 0.01
 
     def __init__(self):
         super().__init__()
@@ -34,11 +37,39 @@ class GLWidget(QOpenGLWidget):
         self.rotation_y = 0.0
         # self.texture_id = None
 
+    def load_texture(self, path, num_textures):
+        if not os.path.exists(path):
+            print(f"File does not exist {path}. Skipping texture.")
+            return
+
+        image = Image.open(path)
+        image = image.convert('RGBA')
+        image_data = np.array(image)
+
+        tex = glGenTextures(1)
+        glActiveTexture(GL_TEXTURE0 + num_textures)
+        glBindTexture(GL_TEXTURE_2D, tex)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
+                     GL_RGBA, GL_UNSIGNED_BYTE, image_data)
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+        return tex
+
     def initializeGL(self):
         glClearColor(1., .6, 1., 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        # glDisable(GL_CULL_FACE)
+
+        self.setup_cube()
+
         try:
             # compile shaders
             vertex_shader_id = compileShader(
@@ -61,28 +92,13 @@ class GLWidget(QOpenGLWidget):
             print(f"Error compiling shaders: {e}")
 
         # load textures
-        image = Image.open('./images/seamless_cow.jpg')
-        image = image.convert('RGBA')
-        image_data = np.array(image)
-
-        glActiveTexture(GL_TEXTURE0)
-        self.texture_id = glGenTextures(1)
-        if isinstance(self.texture_id, list):
-            self.texture_id = self.texture_id[0]
-        glBindTexture(GL_TEXTURE_2D, self.texture_id)
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
-                     GL_RGBA, GL_UNSIGNED_BYTE, image_data)
+        self.load_texture("./images/seamless_cow.jpg", 0)
+        self.load_texture("./images/fur_texture.png", 1)
 
         self.timer.timeout.connect(self.update)  # trigger paintGL
         self.timer.start(16)  # ~60 FPS
 
-        self.setup_cube()
+
 
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -114,22 +130,30 @@ class GLWidget(QOpenGLWidget):
         glUniformMatrix4fv(glGetUniformLocation(
             self.shader, 'view'), 1, GL_FALSE, glm.value_ptr(view))
 
-        # draw cube
-        glBindVertexArray(self.vao)
-        glDrawArrays(GL_TRIANGLES, 0, len(self.vertices))
-        # glDrawElements(GL_TRIANGLES, len(self.vertices), GL_UNSIGNED_INT, None)
-        glBindVertexArray(0)
-        check_gl_errors()
-
-        # use texture
-        glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, self.texture_id)
+        glUniform1i(glGetUniformLocation(self.shader, "shellIndex"), 0)
+        glUniform1f(glGetUniformLocation(self.shader, "shellOffset"), self.SHELL_OFFSET)
 
         # send texture to shader
         glUniform1i(glGetUniformLocation(self.shader, 'textureSampler'), 0)
+        glUniform1i(glGetUniformLocation(self.shader, 'furTexture'), 1)
+        glUniform1f(glGetUniformLocation(self.shader, "alpha"), 1.0)
 
-        
+        # draw cube
+        glBindVertexArray(self.vao)
+        glDrawArrays(GL_TRIANGLES, 0, len(self.vertices))
+        glBindVertexArray(0)
+        check_gl_errors()
 
+        for shell in range(self.SHELL_NUM):
+            glUniform1i(glGetUniformLocation(self.shader, "shellIndex"), shell)
+            glUniform1i(glGetUniformLocation(self.shader, "numShells"), self.SHELL_NUM)
+            glUniform1f(glGetUniformLocation(self.shader, "shellOffset"), self.SHELL_OFFSET)
+            glUniform1f(glGetUniformLocation(self.shader, "alpha"), 1.0 - shell / self.SHELL_NUM)
+
+            glBindVertexArray(self.vao)
+            glDrawArrays(GL_TRIANGLES, 0, len(self.vertices))
+            glBindVertexArray(0)
+            check_gl_errors()
 
 
     def setup_cube(self):
@@ -149,6 +173,7 @@ class GLWidget(QOpenGLWidget):
             [-0.5, 0.5, 0.5, -1, 0, 0, 0.0, 1.0],
             [-0.5, -0.5, -0.5, -1, 0, 0, 1.0, 0.0],
             [-0.5, 0.5, 0.5, -1, 0, 0, 0.0, 1.0],
+
             [-0.5, 0.5, -0.5, -1, 0, 0, 1.0, 1.0],
 
             # top face (y = 0.5)
@@ -219,4 +244,5 @@ class GLWidget(QOpenGLWidget):
         self.rotation_y = -dx - self.WIDTH//2
 
     def cleanup(self):
-        glDeleteTextures(1, [self.texture_id])
+        # glDeleteTextures(1, [self.texture_id])
+        pass
