@@ -37,18 +37,21 @@ class GLWidget(QOpenGLWidget):
         self.rotation_y = 0.0
         self.texture_ids = []
 
-    def load_texture(self, path, num_textures):
+    def load_texture(self, path, tex_code):
         if not os.path.exists(path):
             print(f"File does not exist {path}. Skipping texture.")
             return
 
         image = Image.open(path)
         image = image.convert('RGBA')
-        image_data = np.array(image)
+        image_data = image.tobytes()
+
+        print(path)
+        print(image.size, image.mode)
 
         tex = glGenTextures(1)
         self.texture_ids.append(tex)
-        glActiveTexture(GL_TEXTURE0 + num_textures)
+        glActiveTexture(tex_code)
         glBindTexture(GL_TEXTURE_2D, tex)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
                      GL_RGBA, GL_UNSIGNED_BYTE, image_data)
@@ -92,14 +95,65 @@ class GLWidget(QOpenGLWidget):
         except Exception as e:
             print(f"Error compiling shaders: {e}")
 
+        path = "./images/pink_jaguar.jpg"
+
         # load textures
-        self.load_texture("./images/seamless_cow.jpg", 0)
-        self.load_texture("./images/fur_texture.png", 1)
+        if not os.path.exists(path):
+            print(f"File does not exist {path}. Skipping texture.")
+            return
+
+        glUseProgram(self.shader)
+        #
+        # image = Image.open(path)
+        # image = image.convert('RGBA')
+        # image_data = image.tobytes()
+        #
+        # print(path)
+        # print(image.size, image.mode)
+        #
+        # tex = glGenTextures(1)
+        # print(tex)
+        # self.texture_ids.append(tex)
+        # glActiveTexture(GL_TEXTURE0)
+        # glBindTexture(GL_TEXTURE_2D, tex)
+        # glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
+        #              GL_RGBA, GL_UNSIGNED_BYTE, image_data)
+        #
+        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+        path = "./images/seamless_cow.jpg"
+
+        if not os.path.exists(path):
+            print(f"File does not exist {path}. Skipping texture.")
+            return
+
+        image = Image.open(path)
+        image = image.convert('RGBA')
+        image_data = image.tobytes()
+
+        print(path)
+        print(image.size, image.mode)
+
+        tex = glGenTextures(1)
+        self.texture_ids.append(tex)
+        glActiveTexture(GL_TEXTURE1)
+        glBindTexture(GL_TEXTURE_2D, tex)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
+                     GL_RGBA, GL_UNSIGNED_BYTE, image_data)
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+        # glUniform1i(glGetUniformLocation(self.shader, 'textureSampler'), 0)
+        glUniform1i(glGetUniformLocation(self.shader, 'furTexture'), 1)
 
         self.timer.timeout.connect(self.update)  # trigger paintGL
         self.timer.start(16)  # ~60 FPS
-
-
 
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -135,9 +189,12 @@ class GLWidget(QOpenGLWidget):
         glUniform1f(glGetUniformLocation(self.shader, "shellOffset"), self.SHELL_OFFSET)
 
         # send texture to shader
-        glUniform1i(glGetUniformLocation(self.shader, 'textureSampler'), 0)
+        # glUniform1i(glGetUniformLocation(self.shader, 'textureSampler'), 0)
         glUniform1i(glGetUniformLocation(self.shader, 'furTexture'), 1)
-        glUniform1f(glGetUniformLocation(self.shader, "alpha"), 1.0)
+        # glUniform1f(glGetUniformLocation(self.shader, "alpha"), 1.0)
+
+        # print("textureSampler loc:", glGetUniformLocation(self.shader, 'textureSampler'))
+        # print("furTexture loc:", glGetUniformLocation(self.shader, 'furTexture'))
 
         # draw cube
         glBindVertexArray(self.vao)
@@ -145,16 +202,16 @@ class GLWidget(QOpenGLWidget):
         glBindVertexArray(0)
         check_gl_errors()
 
-        for shell in range(self.SHELL_NUM):
-            glUniform1i(glGetUniformLocation(self.shader, "shellIndex"), shell)
-            glUniform1i(glGetUniformLocation(self.shader, "numShells"), self.SHELL_NUM)
-            glUniform1f(glGetUniformLocation(self.shader, "shellOffset"), self.SHELL_OFFSET)
-            glUniform1f(glGetUniformLocation(self.shader, "alpha"), 1.0 - shell / self.SHELL_NUM)
-
-            glBindVertexArray(self.vao)
-            glDrawArrays(GL_TRIANGLES, 0, len(self.vertices))
-            glBindVertexArray(0)
-            check_gl_errors()
+        # for shell in range(self.SHELL_NUM):
+        #     glUniform1i(glGetUniformLocation(self.shader, "shellIndex"), shell)
+        #     glUniform1i(glGetUniformLocation(self.shader, "numShells"), self.SHELL_NUM)
+        #     glUniform1f(glGetUniformLocation(self.shader, "shellOffset"), self.SHELL_OFFSET)
+        #     glUniform1f(glGetUniformLocation(self.shader, "alpha"), 1.0 - shell / self.SHELL_NUM)
+        #
+        #     glBindVertexArray(self.vao)
+        #     glDrawArrays(GL_TRIANGLES, 0, len(self.vertices))
+        #     glBindVertexArray(0)
+        #     check_gl_errors()
 
 
     def setup_cube(self):

@@ -29,14 +29,13 @@ void main() {
     // textures
     vec4 texColor = texture(textureSampler, frag_uv);
     vec4 furColor = texture(furTexture, frag_uv);
-    float alphaFinal = alpha - furColor.r;
+//    float alphaFinal = alpha - furColor.r;
 
-    if (alpha == 1.) {
-        fragColor = vec4(1., .6, 1., 1.0);
-    } else {
-        fragColor = vec4(texColor.rgb, alphaFinal);
-    }
+//    if (alpha < 0.5) {
+//        fragColor = vec4(1., .6, 1., 1.0);
+//    } else {
+    fragColor = vec4(furColor.rgb, 1.0);  //alphaFinal);
+//    }
 }
-
     // fragColor = vec4(texColor.xyz + light_exp * diffuse, 1.0);}
 
