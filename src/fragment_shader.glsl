@@ -28,13 +28,15 @@ void main() {
 
     // textures
     vec4 texColor = texture(textureSampler, frag_uv);
-    vec4 furTexColor = texture(furTexture, frag_uv);
-    float alphaFinal = alpha - furTexColor.r;
+    vec4 furColor = texture(furTexture, frag_uv);
+    float alphaFinal = alpha - furColor.r;
 
     if (alpha == 1.) {
         fragColor = vec4(1., .6, 1., 1.0);
     } else {
-        fragColor = vec4(vec3(1.0), alphaFinal);
+        fragColor = vec4(texColor.rgb, alphaFinal);
     }
 }
+
     // fragColor = vec4(texColor.xyz + light_exp * diffuse, 1.0);}
+

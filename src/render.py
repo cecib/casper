@@ -22,8 +22,8 @@ def check_gl_errors():
 class GLWidget(QOpenGLWidget):
 
     WIDTH, HEIGHT = 560, 560
-    SHELL_NUM = 20
-    SHELL_OFFSET = 0.01
+    SHELL_NUM = 40
+    SHELL_OFFSET = 0.005
 
     def __init__(self):
         super().__init__()
@@ -35,7 +35,7 @@ class GLWidget(QOpenGLWidget):
         self.vbo = None
         self.rotation_x = 0.0
         self.rotation_y = 0.0
-        # self.texture_id = None
+        self.texture_ids = []
 
     def load_texture(self, path, num_textures):
         if not os.path.exists(path):
@@ -47,6 +47,7 @@ class GLWidget(QOpenGLWidget):
         image_data = np.array(image)
 
         tex = glGenTextures(1)
+        self.texture_ids.append(tex)
         glActiveTexture(GL_TEXTURE0 + num_textures)
         glBindTexture(GL_TEXTURE_2D, tex)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
@@ -62,10 +63,10 @@ class GLWidget(QOpenGLWidget):
     def initializeGL(self):
         glClearColor(1., .6, 1., 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glEnable(GL_DEPTH_TEST)
-        glEnable(GL_MULTISAMPLE)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_DEPTH_TEST)
+
         # glDisable(GL_CULL_FACE)
 
         self.setup_cube()
@@ -159,7 +160,7 @@ class GLWidget(QOpenGLWidget):
     def setup_cube(self):
         """Set up cube and bind buffers."""
         self.vertices = np.array([
-            # right face (x = 0.5)
+            # right face (+x)
             [0.5, -0.5, 0.5, 1, 0, 0, 1.0, 0.0],
             [0.5, -0.5, -0.5, 1, 0, 0, 0.0, 0.0],
             [0.5, 0.5, -0.5, 1, 0, 0, 0.0, 1.0],
@@ -167,16 +168,15 @@ class GLWidget(QOpenGLWidget):
             [0.5, 0.5, -0.5, 1, 0, 0, 0.0, 1.0],
             [0.5, 0.5, 0.5, 1, 0, 0, 1.0, 1.0],
 
-            # left face (x = -0.5)
+            # left face (-x)
             [-0.5, -0.5, -0.5, -1, 0, 0, 1.0, 0.0],
             [-0.5, -0.5, 0.5, -1, 0, 0, 0.0, 0.0],
             [-0.5, 0.5, 0.5, -1, 0, 0, 0.0, 1.0],
             [-0.5, -0.5, -0.5, -1, 0, 0, 1.0, 0.0],
             [-0.5, 0.5, 0.5, -1, 0, 0, 0.0, 1.0],
-
             [-0.5, 0.5, -0.5, -1, 0, 0, 1.0, 1.0],
 
-            # top face (y = 0.5)
+            # top face (+y)
             [-0.5, 0.5, 0.5, 0, 1, 0, 0.0, 1.0],
             [0.5, 0.5, 0.5, 0, 1, 0, 1.0, 1.0],
             [0.5, 0.5, -0.5, 0, 1, 0, 1.0, 0.0],
@@ -184,7 +184,7 @@ class GLWidget(QOpenGLWidget):
             [0.5, 0.5, -0.5, 0, 1, 0, 1.0, 0.0],
             [-0.5, 0.5, -0.5, 0, 1, 0, 0.0, 0.0],
 
-            # bottom face (y = -0.5)
+            # bottom face (-y)
             [-0.5, -0.5, -0.5, 0, -1, 0, 0.0, 1.0],
             [0.5, -0.5, -0.5, 0, -1, 0, 1.0, 1.0],
             [0.5, -0.5, 0.5, 0, -1, 0, 1.0, 0.0],
@@ -192,7 +192,7 @@ class GLWidget(QOpenGLWidget):
             [0.5, -0.5, 0.5, 0, -1, 0, 1.0, 0.0],
             [-0.5, -0.5, 0.5, 0, -1, 0, 0.0, 0.0],
 
-            # front face (z = 0.5)
+            # front face (+z)
             [-0.5, -0.5, 0.5, 0, 0, 1, 0.0, 0.0],
             [0.5, -0.5, 0.5, 0, 0, 1, 1.0, 0.0],
             [0.5, 0.5, 0.5, 0, 0, 1, 1.0, 1.0],
@@ -200,7 +200,7 @@ class GLWidget(QOpenGLWidget):
             [0.5, 0.5, 0.5, 0, 0, 1, 1.0, 1.0],
             [-0.5, 0.5, 0.5, 0, 0, 1, 0.0, 1.0],
 
-            # back face (z = -0.5)
+            # back face (-z)
             [0.5, -0.5, -0.5, 0, 0, -1, 0.0, 0.0],
             [-0.5, -0.5, -0.5, 0, 0, -1, 1.0, 0.0],
             [-0.5, 0.5, -0.5, 0, 0, -1, 1.0, 1.0],
@@ -244,5 +244,6 @@ class GLWidget(QOpenGLWidget):
         self.rotation_y = -dx - self.WIDTH//2
 
     def cleanup(self):
-        # glDeleteTextures(1, [self.texture_id])
+        for texture_id in self.texture_ids:
+            glDeleteTextures(1, texture_id)
         pass
