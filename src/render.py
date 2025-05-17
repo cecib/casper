@@ -46,9 +46,6 @@ class GLWidget(QOpenGLWidget):
         image = image.convert('RGBA')
         image_data = image.tobytes()
 
-        print(path)
-        print(image.size, image.mode)
-
         tex = glGenTextures(1)
         self.texture_ids.append(tex)
         glActiveTexture(tex_code)
@@ -103,53 +100,11 @@ class GLWidget(QOpenGLWidget):
             return
 
         glUseProgram(self.shader)
-        #
-        # image = Image.open(path)
-        # image = image.convert('RGBA')
-        # image_data = image.tobytes()
-        #
-        # print(path)
-        # print(image.size, image.mode)
-        #
-        # tex = glGenTextures(1)
-        # print(tex)
-        # self.texture_ids.append(tex)
-        # glActiveTexture(GL_TEXTURE0)
-        # glBindTexture(GL_TEXTURE_2D, tex)
-        # glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
-        #              GL_RGBA, GL_UNSIGNED_BYTE, image_data)
-        #
-        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        # glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-        path = "./images/seamless_cow.jpg"
+        self.load_texture("./images/seamless_cow.jpg", GL_TEXTURE0)
+        self.load_texture("./images/noise.jpg", GL_TEXTURE1)
 
-        if not os.path.exists(path):
-            print(f"File does not exist {path}. Skipping texture.")
-            return
-
-        image = Image.open(path)
-        image = image.convert('RGBA')
-        image_data = image.tobytes()
-
-        print(path)
-        print(image.size, image.mode)
-
-        tex = glGenTextures(1)
-        self.texture_ids.append(tex)
-        glActiveTexture(GL_TEXTURE1)
-        glBindTexture(GL_TEXTURE_2D, tex)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
-                     GL_RGBA, GL_UNSIGNED_BYTE, image_data)
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-
-        # glUniform1i(glGetUniformLocation(self.shader, 'textureSampler'), 0)
+        glUniform1i(glGetUniformLocation(self.shader, 'textureSampler'), 0)
         glUniform1i(glGetUniformLocation(self.shader, 'furTexture'), 1)
 
         self.timer.timeout.connect(self.update)  # trigger paintGL
@@ -189,30 +144,28 @@ class GLWidget(QOpenGLWidget):
         glUniform1f(glGetUniformLocation(self.shader, "shellOffset"), self.SHELL_OFFSET)
 
         # send texture to shader
-        # glUniform1i(glGetUniformLocation(self.shader, 'textureSampler'), 0)
+        glUniform1i(glGetUniformLocation(self.shader, 'textureSampler'), 0)
         glUniform1i(glGetUniformLocation(self.shader, 'furTexture'), 1)
-        # glUniform1f(glGetUniformLocation(self.shader, "alpha"), 1.0)
 
-        # print("textureSampler loc:", glGetUniformLocation(self.shader, 'textureSampler'))
-        # print("furTexture loc:", glGetUniformLocation(self.shader, 'furTexture'))
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, self.texture_ids[0])
 
-        # draw cube
-        glBindVertexArray(self.vao)
-        glDrawArrays(GL_TRIANGLES, 0, len(self.vertices))
-        glBindVertexArray(0)
-        check_gl_errors()
+        glActiveTexture(GL_TEXTURE1)
+        glBindTexture(GL_TEXTURE_2D, self.texture_ids[1])
 
-        # for shell in range(self.SHELL_NUM):
-        #     glUniform1i(glGetUniformLocation(self.shader, "shellIndex"), shell)
-        #     glUniform1i(glGetUniformLocation(self.shader, "numShells"), self.SHELL_NUM)
-        #     glUniform1f(glGetUniformLocation(self.shader, "shellOffset"), self.SHELL_OFFSET)
-        #     glUniform1f(glGetUniformLocation(self.shader, "alpha"), 1.0 - shell / self.SHELL_NUM)
-        #
-        #     glBindVertexArray(self.vao)
-        #     glDrawArrays(GL_TRIANGLES, 0, len(self.vertices))
-        #     glBindVertexArray(0)
-        #     check_gl_errors()
+        for shell in range(self.SHELL_NUM):
+            glUniform1i(glGetUniformLocation(self.shader, "shellIndex"), shell)
+            glUniform1i(glGetUniformLocation(self.shader, "numShells"), self.SHELL_NUM)
+            glUniform1f(glGetUniformLocation(self.shader, "shellOffset"), self.SHELL_OFFSET)
+            glUniform1f(glGetUniformLocation(self.shader, "alpha"), 1.0 - shell / self.SHELL_NUM)
 
+            glBindVertexArray(self.vao)
+            glDrawArrays(GL_TRIANGLES, 0, len(self.vertices))
+            glBindVertexArray(0)
+
+            print("textureSampler loc:", glGetUniformLocation(self.shader, 'textureSampler'))
+            print("furTexture loc:", glGetUniformLocation(self.shader, 'furTexture'))
+            check_gl_errors()
 
     def setup_cube(self):
         """Set up cube and bind buffers."""
