@@ -25,7 +25,6 @@ class MainWindow(QMainWindow):
         self.last_mouse_pos = event.position()
 
     def mouseMoveEvent(self, event):
-        # TODO: use last mouse pos for rotation dir
         self.last_mouse_pos = event.position()
         dx = event.position().x()
         dy = event.position().y()
