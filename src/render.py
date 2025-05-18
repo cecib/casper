@@ -22,8 +22,8 @@ def check_gl_errors():
 class GLWidget(QOpenGLWidget):
 
     WIDTH, HEIGHT = 560, 560
-    SHELL_NUM = 40
-    SHELL_OFFSET = 0.005
+    SHELL_NUM = 50
+    SHELL_OFFSET = 0.004
 
     def __init__(self):
         super().__init__()
@@ -61,13 +61,12 @@ class GLWidget(QOpenGLWidget):
         return tex
 
     def initializeGL(self):
-        glClearColor(1., .6, 1., 1.0)
+        glClearColor(.6, 1., .6, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glEnable(GL_DEPTH_TEST)
 
         self.setup_cube()
-        # TODO
-        # self.setup_sphere()
+        self.setup_sphere()  # TODO
 
         try:
             # compile shaders
@@ -92,10 +91,10 @@ class GLWidget(QOpenGLWidget):
 
         glUseProgram(self.shader)
 
-        self.load_texture('./images/noise.jpg', GL_TEXTURE0)
+        self.load_texture('./images/pink_jaguar.jpg', GL_TEXTURE0)
         self.load_texture('./images/noise.jpg', GL_TEXTURE1)
 
-        glUniform1i(glGetUniformLocation(self.shader, 'textureSampler'), 0)
+        glUniform1i(glGetUniformLocation(self.shader, 'colorTexture'), 0)
         glUniform1i(glGetUniformLocation(self.shader, 'furTexture'), 1)
 
         self.timer.timeout.connect(self.update)  # trigger paintGL
@@ -114,7 +113,7 @@ class GLWidget(QOpenGLWidget):
         view = glm.lookAt(eye, center, up)
 
         # transform model matrix
-        # TODO: cleanup
+        # TODO: cleanup, improve rotation
         if not self.rotation_x and not self.rotation_y:
             model = glm.mat4(1.0)
             model = glm.rotate(model, glm.radians(45), glm.vec3(1.0, 0.0, 0.0))
@@ -141,10 +140,7 @@ class GLWidget(QOpenGLWidget):
         glUniform1f(glGetUniformLocation(
             self.shader, 'shellOffset'), self.SHELL_OFFSET)
 
-        # send textures to shader
-        glUniform1i(glGetUniformLocation(self.shader, 'textureSampler'), 0)
-        glUniform1i(glGetUniformLocation(self.shader, 'furTexture'), 1)
-
+        # activate and bind textures
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, self.texture_ids[0])
 
@@ -154,8 +150,9 @@ class GLWidget(QOpenGLWidget):
         # draw first opaque cube
         glDisable(GL_BLEND)
 
-        glUniform1f(glGetUniformLocation(self.shader, 'alpha'), 1.0)
+        glUniform1i(glGetUniformLocation(self.shader, 'shellIndex'), 0)
         glUniform1f(glGetUniformLocation(self.shader, 'shellOffset'), 0.0)
+        glUniform1f(glGetUniformLocation(self.shader, 'alpha'), 1.0)
 
         glBindVertexArray(self.vao)
         glDrawArrays(GL_TRIANGLES, 0, len(self.vertices))
@@ -166,7 +163,7 @@ class GLWidget(QOpenGLWidget):
                             GL_ONE, GL_ONE_MINUS_SRC_ALPHA)
 
         for shell in range(self.SHELL_NUM):
-            glUniform1i(glGetUniformLocation(self.shader, 'shellIndex'), shell)
+            glUniform1i(glGetUniformLocation(self.shader, 'shellIndex'), shell + 1)
             glUniform1i(glGetUniformLocation(self.shader, 'numShells'), self.SHELL_NUM)
             glUniform1f(glGetUniformLocation(self.shader, 'shellOffset'), self.SHELL_OFFSET)
             glUniform1f(glGetUniformLocation(self.shader, 'alpha'), 1.0 - shell / self.SHELL_NUM)
@@ -257,6 +254,9 @@ class GLWidget(QOpenGLWidget):
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)  # unbind VAO
+
+    def setup_sphere(self):
+        pass
 
     def update_rotation(self, dx, dy):
         self.rotation_x = dy + self.HEIGHT//2
