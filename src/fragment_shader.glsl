@@ -22,9 +22,9 @@ void main() {
      vec3 diffuse = vec3(max(dot(n, lightDir), 0.))/length(light_pos);
 
     // fur shell texturing
-    vec4 texColor = texture(textureSampler, frag_uv);
+    vec4 texColor = texture(textureSampler, frag_uv) + vec4(-.2, .1, -.2, 1.0);
     vec4 furNoise = texture(furTexture, frag_uv);
     vec3 finalColor = texColor.rgb * 0.75 + furNoise.rgb * 0.25;
 
-    fragColor = vec4(finalColor + diffuse * 2.0, alpha * furNoise.r);
+    fragColor = vec4(finalColor + diffuse * 2.0, alpha);
 }

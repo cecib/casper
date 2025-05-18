@@ -17,9 +17,15 @@ out vec3 frag_position;
 out vec3 frag_normal;
 out vec2 frag_uv;
 
+vec3 gravity_force = vec3(0., -0.001, 0.);
+
 void main() {
     vec3 n = normalize(in_normal);
     vec3 p = in_position + n * shellOffset * shellIndex;
+    vec3 pull = gravity_force * pow(float(shellIndex), 3.0) * 0.001;
+    vec4 gravity = inverse(model) * vec4(pull, 1.0);
+    p = p + gravity.xyz;
+
     gl_Position = projection * view * model * vec4(p, 1.0);
 
     frag_normal = mat3(transpose(inverse(model))) * in_normal;

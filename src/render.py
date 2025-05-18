@@ -23,7 +23,7 @@ class GLWidget(QOpenGLWidget):
 
     WIDTH, HEIGHT = 560, 560
     SHELL_NUM = 40
-    SHELL_OFFSET = 0.0035
+    SHELL_OFFSET = 0.005
 
     def __init__(self):
         super().__init__()
@@ -66,6 +66,8 @@ class GLWidget(QOpenGLWidget):
         glEnable(GL_DEPTH_TEST)
 
         self.setup_cube()
+        # TODO
+        # self.setup_sphere()
 
         try:
             # compile shaders
@@ -90,7 +92,7 @@ class GLWidget(QOpenGLWidget):
 
         glUseProgram(self.shader)
 
-        self.load_texture('./images/seamless_cow.jpg', GL_TEXTURE0)
+        self.load_texture('./images/noise.jpg', GL_TEXTURE0)
         self.load_texture('./images/noise.jpg', GL_TEXTURE1)
 
         glUniform1i(glGetUniformLocation(self.shader, 'textureSampler'), 0)
@@ -112,11 +114,17 @@ class GLWidget(QOpenGLWidget):
         view = glm.lookAt(eye, center, up)
 
         # transform model matrix
-        model = glm.mat4(1.0)
-        model = glm.rotate(model, glm.radians(
-            self.rotation_x % 360), glm.vec3(1.0, 0.0, 0.0))
-        model = glm.rotate(model, glm.radians(
-            self.rotation_y % 360), glm.vec3(0.0, 1.0, 0.0))
+        # TODO: cleanup
+        if not self.rotation_x and not self.rotation_y:
+            model = glm.mat4(1.0)
+            model = glm.rotate(model, glm.radians(45), glm.vec3(1.0, 0.0, 0.0))
+            model = glm.rotate(model, glm.radians(45), glm.vec3(0.0, 1.0, 0.0))
+        else:
+            model = glm.mat4(1.0)
+            model = glm.rotate(model, glm.radians(
+                self.rotation_x % 360), glm.vec3(1.0, 0.0, 0.0))
+            model = glm.rotate(model, glm.radians(
+                self.rotation_y % 360), glm.vec3(0.0, 1.0, 0.0))
 
         # use shader program
         glUseProgram(self.shader)
