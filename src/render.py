@@ -2,6 +2,7 @@ import os
 import glm
 import numpy as np
 import time
+import math
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtCore import QTimer
 from OpenGL.GL import *
@@ -23,9 +24,13 @@ def check_gl_errors():
         print(f"OpenGL Error: {gl_error}")
 
 
+def fract(t):
+    return t - math.floor(t)
+
+
 class GLWidget(QOpenGLWidget):
 
-    WIDTH, HEIGHT = 560, 560
+    WIDTH, HEIGHT = 1000, 1000
     SHELL_NUM = 40
     SHELL_OFFSET = 0.005
 
@@ -33,10 +38,13 @@ class GLWidget(QOpenGLWidget):
         super().__init__()
         self.setMinimumSize(self.WIDTH, self.HEIGHT)
         self.timer = QTimer(self)
-        self.shader = None
         self.vertices = None
+        self.shader = None
         self.vao = None
         self.vbo = None
+        self.fps = None
+        self.frame_start = 0
+        self.frame_count = 0
         self.rotation_x = 0.0
         self.rotation_y = 0.0
         self.texture_ids = []
@@ -102,7 +110,7 @@ class GLWidget(QOpenGLWidget):
         glUniform1i(glGetUniformLocation(self.shader, 'furTexture'), 1)
 
         self.timer.timeout.connect(self.update)  # trigger paintGL
-        self.timer.start(16)  # ~60 FPS
+        self.timer.start(16)
 
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -170,6 +178,14 @@ class GLWidget(QOpenGLWidget):
 
         glBindVertexArray(0)
         check_gl_errors()
+        self.update_fps()
+
+        # debug
+        time_delta = time.time() - START_TIME
+        m = 100.0
+        y = fract(math.sin(time_delta) * m)
+        # print(f"fract(sin(t) * {str(m)}) = {y}")
+        print(f"FPS: {self.fps}")
 
     def setup_cube(self):
         """Set up cube and bind buffers."""
@@ -251,7 +267,17 @@ class GLWidget(QOpenGLWidget):
         glEnableVertexAttribArray(2)
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
-        glBindVertexArray(0)  # unbind VAO
+        glBindVertexArray(0)
+
+    def update_fps(self):
+        curr_time = time.time()
+        elapsed_time = curr_time - self.frame_start
+        self.frame_count += 1
+
+        if elapsed_time >= 1.0:
+            self.fps = self.frame_count / elapsed_time
+            self.frame_start = curr_time
+            self.frame_count = 0
 
     def update_rotation(self, dx, dy):
         self.rotation_x = dy + self.HEIGHT//2

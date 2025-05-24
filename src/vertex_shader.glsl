@@ -22,6 +22,10 @@ out vec2 frag_uv;
 vec3 gravity_force = vec3(0., -0.001, 0.);
 vec3 wind_force = vec3(.0005, 0., 0.);
 
+float rand(float x) {
+    return fract(sin(x) * 10.0);
+}
+
 void main() {
     vec3 n = normalize(in_normal);
     vec3 p = in_position + n * shellOffset * shellIndex;    // shell texturing
@@ -29,7 +33,7 @@ void main() {
     // apply gravity and wind
     float influence = pow(float(shellIndex), 3.0) * 0.001;  // larger effect at the ends
     vec3 pull = gravity_force * influence;
-    vec3 wind = abs(sin(time * 2.0)) * wind_force * influence;
+    vec3 wind = sin(time * 2.0) * wind_force * influence;
     vec4 forces = inverse(model) * vec4(pull + wind, 1.0);
     p = p + forces.xyz;
 

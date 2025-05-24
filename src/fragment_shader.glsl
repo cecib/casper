@@ -4,6 +4,8 @@ in vec3 frag_position;
 in vec3 frag_normal;
 in vec2 frag_uv;
 
+uniform float time;
+
 uniform sampler2D colorTexture;
 uniform sampler2D furTexture;
 uniform int shellIndex;
@@ -14,6 +16,10 @@ out vec4 fragColor;
 vec3 light_pos = vec3(-2., 0., 2.);
 float light_exp = .35;   // exposure
 vec3 cube_color = vec3(.1, .0, .1);
+
+float rand(float x) {
+    return fract(sin(x) * 100);
+}
 
 void main() {
     // lighting
@@ -29,4 +35,8 @@ void main() {
     float taper = alpha - furNoise.r * shellIndex * 0.035;
 
     fragColor = vec4(color + ambient + diffuse * light_exp, taper);
+
+    // debug
+    vec3 random_value = vec3(rand(time));
+    // fragColor = vec4(random_value, 1.0);
 }
