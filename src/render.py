@@ -49,31 +49,8 @@ class GLWidget(QOpenGLWidget):
         self.rotation_y = 0.0
         self.texture_ids = []
 
-    def load_texture(self, path, tex_code):
-        if not os.path.exists(path):
-            print(f"File does not exist {path}. Skipping texture.")
-            return
-
-        image = Image.open(path)
-        image = image.convert('RGBA')
-        image_data = image.tobytes()
-
-        tex = glGenTextures(1)
-        self.texture_ids.append(tex)
-        glActiveTexture(tex_code)
-        glBindTexture(GL_TEXTURE_2D, tex)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
-                     GL_RGBA, GL_UNSIGNED_BYTE, image_data)
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-
-        return tex
-
     def initializeGL(self):
-        glClearColor(.6, 1., .6, 1.0)
+        glClearColor(.85, .6, .8, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glEnable(GL_DEPTH_TEST)
         glDisable(GL_CULL_FACE)
@@ -103,7 +80,7 @@ class GLWidget(QOpenGLWidget):
 
         glUseProgram(self.shader)
 
-        self.load_texture('./images/pink_jaguar.jpg', GL_TEXTURE0)
+        self.load_texture('./images/cow.jpg', GL_TEXTURE0)
         self.load_texture('./images/noise.jpg', GL_TEXTURE1)
 
         glUniform1i(glGetUniformLocation(self.shader, 'colorTexture'), 0)
@@ -142,14 +119,14 @@ class GLWidget(QOpenGLWidget):
         glUniformMatrix4fv(glGetUniformLocation(
             self.shader, 'view'), 1, GL_FALSE, glm.value_ptr(view))
 
-        glUniform1i(glGetUniformLocation(self.shader, 'shellIndex'), 0)
+        glUniform1f(glGetUniformLocation(self.shader, 'time'),
+                    time.time() - START_TIME)
         glUniform1i(glGetUniformLocation(
             self.shader, 'numShells'), self.SHELL_NUM)
+        glUniform1i(glGetUniformLocation(self.shader, 'shellIndex'), 0)
         glUniform1f(glGetUniformLocation(
             self.shader, 'shellOffset'), self.SHELL_OFFSET)
         glUniform1f(glGetUniformLocation(self.shader, 'alpha'), 1.0)
-        glUniform1f(glGetUniformLocation(self.shader, 'time'),
-                    time.time() - START_TIME)
 
         # activate and bind textures
         glActiveTexture(GL_TEXTURE0)
@@ -180,12 +157,28 @@ class GLWidget(QOpenGLWidget):
         check_gl_errors()
         self.update_fps()
 
-        # debug
-        time_delta = time.time() - START_TIME
-        m = 100.0
-        y = fract(math.sin(time_delta) * m)
-        # print(f"fract(sin(t) * {str(m)}) = {y}")
-        print(f"FPS: {self.fps}")
+    def load_texture(self, path, tex_code):
+        if not os.path.exists(path):
+            print(f"File does not exist {path}. Skipping texture.")
+            return
+
+        image = Image.open(path)
+        image = image.convert('RGBA')
+        image_data = image.tobytes()
+
+        tex = glGenTextures(1)
+        self.texture_ids.append(tex)
+        glActiveTexture(tex_code)
+        glBindTexture(GL_TEXTURE_2D, tex)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
+                     GL_RGBA, GL_UNSIGNED_BYTE, image_data)
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+        return tex
 
     def setup_cube(self):
         """Set up cube and bind buffers."""

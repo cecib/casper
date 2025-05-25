@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtGui import QSurfaceFormat
+from PySide6.QtGui import QSurfaceFormat, QPainter
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from render import GLWidget
 
@@ -13,13 +13,18 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('casper render')
-        layout = QVBoxLayout()
+        self.painter = QPainter
         self.gl_widget = GLWidget()
+        layout = QVBoxLayout()
         layout.addWidget(self.gl_widget)
         central_widget = QWidget(self)
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
         self.last_mouse_pos = None
+
+    def closeEvent(self, event):
+        self.gl_widget.cleanup()
+        event.accept()
 
     def mousePressEvent(self, event):
         self.last_mouse_pos = event.position()
@@ -30,10 +35,9 @@ class MainWindow(QMainWindow):
         dy = event.position().y()
         self.gl_widget.update_rotation(dx, dy)
 
-    def closeEvent(self, event):
-        self.gl_widget.cleanup()
-        event.accept()
-
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        # TODO: draw fps overlay
 
 def main():
     app = QApplication(sys.argv)

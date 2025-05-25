@@ -18,7 +18,7 @@ float light_exp = .35;   // exposure
 vec3 cube_color = vec3(.1, .0, .1);
 
 float rand(float x) {
-    return fract(sin(x) * 100);
+    return fract(sin(x) * 1000);
 }
 
 void main() {
@@ -35,8 +35,4 @@ void main() {
     float taper = alpha - furNoise.r * shellIndex * 0.035;
 
     fragColor = vec4(color + ambient + diffuse * light_exp, taper);
-
-    // debug
-    vec3 random_value = vec3(rand(time));
-    // fragColor = vec4(random_value, 1.0);
 }
