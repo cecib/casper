@@ -30,7 +30,7 @@ def fract(t):
 
 class GLWidget(QOpenGLWidget):
 
-    WIDTH, HEIGHT = 1000, 1000
+    WIDTH, HEIGHT = 1200, 1200
     SHELL_NUM = 40
     SHELL_OFFSET = 0.005
 
@@ -96,7 +96,7 @@ class GLWidget(QOpenGLWidget):
         projection = glm.perspective(glm.radians(45.0), 1.0, 0.1, 100.0)
 
         # view matrix
-        eye = glm.vec3(0.0, 0.0, 4.0)
+        eye = glm.vec3(0.0, 0.0, 4.2)
         center = glm.vec3(0.0, 0.0, 0.0)
         up = glm.vec3(0.0, 1.0, 0.0)
         view = glm.lookAt(eye, center, up)

@@ -4,6 +4,8 @@ in vec3 frag_position;
 in vec3 frag_normal;
 in vec2 frag_uv;
 
+in vec3 debug_val;
+
 uniform float time;
 
 uniform sampler2D colorTexture;
@@ -17,8 +19,12 @@ vec3 light_pos = vec3(-2., 0., 2.);
 float light_exp = .35;   // exposure
 vec3 cube_color = vec3(.1, .0, .1);
 
-float rand(float x) {
-    return fract(sin(x) * 1000);
+float rand(float t) {
+    return fract(sin(t) * 356548.);
+}
+
+float rand_2(vec2 uv) {
+    return fract(sin(dot(uv, vec2(12.98, 78.23))) * 356548.);
 }
 
 void main() {
